@@ -279,6 +279,7 @@ void DdsPipe::discovered_endpoint_nts_(
         const Endpoint& endpoint) noexcept
 {
     logDebug(DDSPIPE, "Endpoint discovered in DDS Pipe core: " << endpoint << ".");
+    std::cout << "Endpoint discovered in DDS Pipe core: " << endpoint << "." << std::endl;
 
     if (RpcTopic::is_service_topic(endpoint.topic))
     {
@@ -414,6 +415,7 @@ void DdsPipe::discovered_topic_nts_(
         const utils::Heritable<DistributedTopic>& topic) noexcept
 {
     logInfo(DDSPIPE, "Discovered topic: " << topic << " by: " << topic->topic_discoverer() << ".");
+    std::cout << "Discovered topic: " << topic << " by: " << topic->topic_discoverer() << "." << std::endl;
 
     // Check if the bridge (and the topic) already exist.
     auto it_bridge = bridges_.find(topic);
@@ -441,6 +443,7 @@ void DdsPipe::discovered_service_nts_(
         const ParticipantId& server_participant_id,
         const GuidPrefix& server_guid_prefix) noexcept
 {
+    std::cout << "Discovered service: " << topic << "." << std::endl;
     logInfo(DDSPIPE, "Discovered service: " << topic << ".");
 
     auto it_bridge = rpc_bridges_.find(topic);
@@ -487,6 +490,7 @@ void DdsPipe::create_new_bridge_nts_(
         bool enabled /*= false*/) noexcept
 {
     logInfo(DDSPIPE, "Creating Bridge for topic: " << topic << ".");
+    std::cout << "Creating Bridge for topic: " << topic << "." << std::endl;
 
     try
     {
@@ -520,6 +524,7 @@ void DdsPipe::create_new_bridge_nts_(
 void DdsPipe::create_new_service_nts_(
         const RpcTopic& topic) noexcept
 {
+    std::cout << "Creating Service: " << topic << "." << std::endl;
     logInfo(DDSPIPE, "Creating Service: " << topic << ".");
 
     // Endpoints not created until enabled for the first time, so no exception can be thrown

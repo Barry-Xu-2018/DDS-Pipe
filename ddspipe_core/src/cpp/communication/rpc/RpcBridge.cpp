@@ -45,6 +45,7 @@ RpcBridge::RpcBridge(
     logDebug(DDSPIPE_RPCBRIDGE, "Creating RpcBridge " << *this << ".");
 
     logDebug(DDSPIPE_RPCBRIDGE, "RpcBridge " << *this << " created.");
+    std::cout << "RpcBridge " << *this << " created." << std::endl;
 }
 
 RpcBridge::~RpcBridge()
@@ -60,13 +61,16 @@ RpcBridge::~RpcBridge()
 void RpcBridge::init_nts_()
 {
     logInfo(DDSPIPE_RPCBRIDGE, "Creating endpoints in RpcBridge for service " << rpc_topic_ << ".");
+    std::cout << "Creating endpoints in RpcBridge for service " << rpc_topic_ << "." << std::endl;
 
     // TODO: remove and use every participant
-    std::set<ParticipantId> ids = participants_->get_rtps_participants_ids();
+    // std::set<ParticipantId> ids = participants_->get_rtps_participants_ids();
+    std::set<ParticipantId> ids = participants_->get_participants_ids();
 
     // Create a proxy client and server in each RTPS participant
     for (ParticipantId id: ids)
     {
+        printf("+++++ create proxy \n");
         create_proxy_client_nts_(id);
         create_proxy_server_nts_(id);
         if (current_servers_[id].size())
@@ -114,6 +118,7 @@ void RpcBridge::enable() noexcept
     if (!enabled_ && servers_available_())
     {
         logInfo(DDSPIPE_RPCBRIDGE, "Enabling RpcBridge for service " << rpc_topic_ << ".");
+        std::cout << "Enabling RpcBridge for service " << rpc_topic_ << "." << std::endl;
 
         if (!init_)
         {
@@ -267,6 +272,7 @@ void RpcBridge::transmit_(
 
     logDebug(DDSPIPE_RPCBRIDGE, "RpcBridge " << *this <<
             " transmitting for reader " << reader->guid() << " .");
+    std::cout << "RpcBridge " << *this << " transmitting for reader " << reader->guid() << " ." << std::endl;
 
     while (true)
     {
@@ -297,9 +303,6 @@ void RpcBridge::transmit_(
         std::unique_ptr<IRoutingData> data;
         utils::ReturnCode ret = reader->take(data);
 
-        RpcPayloadData& rpc_data = dynamic_cast<RpcPayloadData&>(*data);
-
-
         // Will never return \c RETCODE_NO_DATA, otherwise would have finished before
         if (!ret)
         {
@@ -310,12 +313,16 @@ void RpcBridge::transmit_(
                                                                     << ". Skipping data and continue.");
             continue;
         }
+    
+        RpcPayloadData& rpc_data = dynamic_cast<RpcPayloadData&>(*data);
 
         if (RpcTopic::is_request_topic(reader->topic()))
         {
             logDebug(DDSPIPE_RPCBRIDGE,
                     "RpcBridge for service " << rpc_topic_ <<
                     " transmitting request from remote endpoint " << rpc_data.source_guid << ".");
+            std::cout << "RpcBridge for service " << rpc_topic_ <<
+                " transmitting request from remote endpoint " << rpc_data.source_guid << "." << std::endl;
 
             SampleIdentity reply_related_sample_identity =
                     rpc_data.write_params.get_reference().sample_identity();

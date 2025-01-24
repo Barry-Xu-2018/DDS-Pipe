@@ -73,6 +73,26 @@ public:
     virtual void on_data_available(
             fastdds::dds::DataReader* reader);
 
+    /////////////////////////
+    // RPC REQUIRED METHODS
+    /////////////////////////
+    // TODO remove these methods once the double reference is solved
+
+    //! Get GUID of internal RTPS reader
+    DDSPIPE_PARTICIPANTS_DllAPI
+    core::types::Guid guid() const noexcept override;
+
+    //! Get internal RTPS reader mutex
+    DDSPIPE_PARTICIPANTS_DllAPI
+    fastrtps::RecursiveTimedMutex& get_rtps_mutex() const noexcept override;
+
+    //! Get number of unread cache changes in internal RTPS reader
+    DDSPIPE_PARTICIPANTS_DllAPI
+    uint64_t get_unread_count() const noexcept override;
+
+    DDSPIPE_PARTICIPANTS_DllAPI
+    core::types::DdsTopic topic() const noexcept override;
+
 protected:
 
     /////////////////////////
@@ -144,6 +164,12 @@ protected:
             const fastdds::dds::SampleInfo& info,
             core::types::RtpsPayloadData& data_to_fill) const noexcept;
 
+    /**
+     * @brief Return an allocated object
+     *
+     * @attention this method allocates memory.
+     */
+    virtual core::types::RtpsPayloadData* create_data_() const noexcept;
 
     /////////////////////////
     // EXTERNAL METHODS
@@ -162,6 +188,9 @@ protected:
 
     fastdds::dds::Subscriber* dds_subscriber_;
     fastdds::dds::DataReader* reader_;
+
+    // simulate rtps mutex
+    mutable fastrtps::RecursiveTimedMutex mp_mutex_;
 };
 
 } /* namespace dds */
