@@ -60,7 +60,7 @@ public:
     DDSPIPE_PARTICIPANTS_DllAPI
     virtual void fill_received_data_(
             const fastdds::dds::SampleInfo& info,
-            core::types::RtpsPayloadData& data_to_fill) const noexcept;
+            core::types::RtpsPayloadData& data_to_fill) const noexcept override;
 };
 
 } /* namespace rpc */

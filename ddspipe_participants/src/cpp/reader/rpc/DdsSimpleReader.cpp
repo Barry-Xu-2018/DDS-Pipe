@@ -16,6 +16,7 @@
 #include <fastrtps/rtps/participant/RTPSParticipant.h>
 
 #include <ddspipe_core/types/data/RpcPayloadData.hpp>
+#include <ddspipe_core/types/data/RtpsPayloadData.hpp>
 
 #include <ddspipe_participants/reader/rpc/DdsSimpleReader.hpp>
 #include <cpp_utils/exception/InitializationException.hpp>
@@ -94,7 +95,6 @@ void DdsSimpleReader::fill_received_data_(
 
     rpc_data.origin_sequence_number = info.sample_identity.sequence_number();
 }
-
 
 } /* namespace rpc */
 } /* namespace participants */

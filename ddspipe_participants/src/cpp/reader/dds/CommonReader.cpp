@@ -143,7 +143,7 @@ utils::ReturnCode CommonReader::take_nts_(
 
     do
     {
-        rtps_data.reset(new RtpsPayloadData());
+        rtps_data.reset(create_data_());
 
         auto ret = reader_->take_next_sample(rtps_data.get(), &info);
 

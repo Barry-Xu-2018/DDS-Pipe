@@ -118,6 +118,14 @@ protected:
 
     // Specific enable/disable do not need to be implemented
 
+    DDSPIPE_PARTICIPANTS_DllAPI
+    virtual void fill_received_data_(
+            const fastdds::dds::SampleInfo& info,
+            core::types::RtpsPayloadData& data_to_fill) const noexcept;
+
+    DDSPIPE_PARTICIPANTS_DllAPI
+    virtual core::types::RtpsPayloadData* create_data_() const noexcept;
+
     /////////////////////////
     // IREADER OVERRIDE METHODS
     /////////////////////////
@@ -159,17 +167,6 @@ protected:
     //! Whether a sample received should be processed
     virtual bool should_accept_sample_(
             const fastdds::dds::SampleInfo& info) noexcept;
-
-    virtual void fill_received_data_(
-            const fastdds::dds::SampleInfo& info,
-            core::types::RtpsPayloadData& data_to_fill) const noexcept;
-
-    /**
-     * @brief Return an allocated object
-     *
-     * @attention this method allocates memory.
-     */
-    virtual core::types::RtpsPayloadData* create_data_() const noexcept;
 
     /////////////////////////
     // EXTERNAL METHODS
