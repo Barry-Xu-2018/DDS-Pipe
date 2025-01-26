@@ -141,7 +141,8 @@ std::shared_ptr<core::IWriter> CommonParticipant::create_writer(
         logDebug(DDSPIPE_DDS_PARTICIPANT, "Not creating Writer for non RTPS topic " << dds_topic.topic_name());
         return std::make_shared<BlankWriter>();
 #else
-        std::cout << "Creating RPC Writer for topic " << fastdds_topic->get_name() << std::endl;
+        std::cout << "Creating DDS RPC Writer for topic " << fastdds_topic->get_name()
+            << " for " << configuration_->domain << std::endl;
         auto writer = std::make_shared<rpc::DdsSimpleWriter>(
             this->id(),
             dds_topic,
@@ -208,7 +209,8 @@ std::shared_ptr<core::IReader> CommonParticipant::create_reader(
         //logDebug(DDSPIPE_DDS_PARTICIPANT, "Not creating Reader for non RTPS topic " << dds_topic.topic_name());
         return std::make_shared<BlankReader>();
 #else
-        std::cout << "Creating RPC Reader for topic " << fastdds_topic->get_name() << std::endl;
+        std::cout << "Creating DDS RPC Reader for topic " << fastdds_topic->get_name()
+            << " for " << configuration_->domain << std::endl;
         auto reader = std::make_shared<rpc::DdsSimpleReader>(
             this->id(),
             dds_topic,

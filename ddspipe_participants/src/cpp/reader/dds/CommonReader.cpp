@@ -130,7 +130,7 @@ utils::ReturnCode CommonReader::take_nts_(
     // NOTE: we assume this function is always called with nullptr data
 
     logInfo(DDSPIPE_DDS_READER, "Taking data in " << participant_id_ << " for topic " << topic_ << ".");
-    std::cout << "Taking data in " << participant_id_ << " for topic " << topic_ << "." << std::endl;
+    std::cout << "Taking data in " << participant_id_ << " for topic [" << topic_.topic_name() << "]." << std::endl;
 
     // Check if there is data available
     if (!(reader_->get_unread_count() > 0))
@@ -153,17 +153,19 @@ utils::ReturnCode CommonReader::take_nts_(
         if (!ret)
         {
             // There has been an error taking the data. Exit.
+            std::cout << "take_next_sample() return error !" << std::endl;
             return ret;
         }
     } while (!should_accept_sample_(info));
 
     logInfo(DDSPIPE_DDS_READER, "Data taken in " << participant_id_ << " for topic " << topic_ << ".");
-    std::cout << "Data taken in " << participant_id_ << " for topic " << topic_ << "." << std::endl;
+    std::cout << "Data taken in " << participant_id_ << " for topic [" << topic_.topic_name() << "]." << std::endl;
 
     // Verify that the rtps_data object is valid
     if (!rtps_data)
     {
         logError(DDSPIPE_DDS_READER, "The data taken by the reader is not valid.");
+        std::cout << "The data taken by the reader is not valid." << std::endl;
         return utils::ReturnCode::RETCODE_ERROR;
     }
 

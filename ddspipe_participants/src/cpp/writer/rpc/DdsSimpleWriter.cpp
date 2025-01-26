@@ -40,6 +40,7 @@ DdsSimpleWriter::DdsSimpleWriter(
         participant_id, topic, payload_pool, participant, topic_entity)
 {
     // Do nothing
+    //std::cout << "Creating DDS RPC Writer for topic " << topic_ << std::endl;
 }
 
 utils::ReturnCode DdsSimpleWriter::get_send_params_(

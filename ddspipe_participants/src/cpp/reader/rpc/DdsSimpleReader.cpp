@@ -39,7 +39,7 @@ DdsSimpleReader::DdsSimpleReader(
         participant_id, topic, payload_pool, participant, topic_entity)
 {
     logInfo(DDSPIPE_RPC_READER, "Creating RPC Reader for topic " << topic_);
-    std::cout << "Creating RPC Reader for topic " << topic_ << std::endl;
+    //std::cout << "Creating DDS RPC Reader for topic " << topic_ << std::endl;
 }
 
 core::types::RtpsPayloadData* DdsSimpleReader::create_data_() const noexcept
