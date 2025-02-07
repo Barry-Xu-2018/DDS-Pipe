@@ -117,6 +117,7 @@ void ParticipantsDatabase::add_participant(
     }
     else
     {
+        std::cout << "Inserting a new Participant " << id << std::endl;
         logInfo(DDSPIPE_PARTICIPANT_DATABASE, "Inserting a new Participant " << id);
     }
 

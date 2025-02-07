@@ -131,6 +131,7 @@ bool DiscoveryDatabase::add_endpoint_(
         }
         else
         {
+            //std::cout << "Inserting a new discovered Endpoint " << new_endpoint << "." << std::endl;
             logInfo(DDSPIPE_DISCOVERY_DATABASE, "Inserting a new discovered Endpoint " << new_endpoint << ".");
 
             // Add it to the dictionary

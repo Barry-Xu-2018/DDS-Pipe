@@ -26,9 +26,11 @@
 #include <ddspipe_participants/writer/auxiliar/BlankWriter.hpp>
 #include <ddspipe_participants/writer/dds/MultiWriter.hpp>
 #include <ddspipe_participants/writer/dds/SimpleWriter.hpp>
+#include <ddspipe_participants/writer/rpc/DdsSimpleWriter.hpp>
 #include <ddspipe_participants/reader/auxiliar/BlankReader.hpp>
 #include <ddspipe_participants/reader/dds/SimpleReader.hpp>
 #include <ddspipe_participants/reader/dds/SpecificQoSReader.hpp>
+#include <ddspipe_participants/reader/rpc/DdsSimpleReader.hpp>
 #include <ddspipe_participants/types/dds/TopicDataType.hpp>
 
 #include <utils/utils.hpp>
@@ -128,15 +130,35 @@ std::shared_ptr<core::IWriter> CommonParticipant::create_writer(
     }
     const core::types::DdsTopic& dds_topic = *topic_ptr;
 
+    // Get the DDS Topic associated (create it if it does not exist)
+    fastdds::dds::Topic* fastdds_topic = topic_related_(dds_topic);
+
     // Check that it is RTPS topic
     if (dds_topic.internal_type_discriminator() != core::types::INTERNAL_TOPIC_TYPE_RTPS)
     {
+#if 0
+        std::cerr << "Not creating Writer for non RTPS topic " << dds_topic.topic_name() << std::endl;
         logDebug(DDSPIPE_DDS_PARTICIPANT, "Not creating Writer for non RTPS topic " << dds_topic.topic_name());
         return std::make_shared<BlankWriter>();
+#else
+        std::cout << "Creating DDS RPC Writer for topic " << fastdds_topic->get_name()
+            << " for " << configuration_->domain << std::endl;
+        auto writer = std::make_shared<rpc::DdsSimpleWriter>(
+            this->id(),
+            dds_topic,
+            this->payload_pool_,
+            dds_participant_,
+            fastdds_topic);
+        writer->init();
+
+        return writer;
+#endif
     }
 
+#if 0
     // Get the DDS Topic associated (create it if it does not exist)
     fastdds::dds::Topic* fastdds_topic = topic_related_(dds_topic);
+#endif
 
     if (dds_topic.topic_qos.has_partitions() || dds_topic.topic_qos.has_ownership())
     {
@@ -176,15 +198,35 @@ std::shared_ptr<core::IReader> CommonParticipant::create_reader(
 
     const core::types::DdsTopic& dds_topic = *topic_ptr;
 
+    // Get the DDS Topic associated (create it if it does not exist)
+    fastdds::dds::Topic* fastdds_topic = topic_related_(dds_topic);
+
     // Check that it is RTPS topic
     if (dds_topic.internal_type_discriminator() != core::types::INTERNAL_TOPIC_TYPE_RTPS)
     {
-        logDebug(DDSPIPE_DDS_PARTICIPANT, "Not creating Reader for non RTPS topic " << dds_topic.topic_name());
+#if 0
+        std::cerr << "Not creating Reader for non RTPS topic " << dds_topic.topic_name() << std::endl;
+        //logDebug(DDSPIPE_DDS_PARTICIPANT, "Not creating Reader for non RTPS topic " << dds_topic.topic_name());
         return std::make_shared<BlankReader>();
+#else
+        std::cout << "Creating DDS RPC Reader for topic " << fastdds_topic->get_name()
+            << " for " << configuration_->domain << std::endl;
+        auto reader = std::make_shared<rpc::DdsSimpleReader>(
+            this->id(),
+            dds_topic,
+            this->payload_pool_,
+            dds_participant_,
+            fastdds_topic);
+        reader->init();
+
+        return reader;
+#endif
     }
 
+#if 0
     // Get the DDS Topic associated (create it if it does not exist)
     fastdds::dds::Topic* fastdds_topic = topic_related_(dds_topic);
+#endif
 
     if (dds_topic.topic_qos.has_partitions() || dds_topic.topic_qos.has_ownership())
     {

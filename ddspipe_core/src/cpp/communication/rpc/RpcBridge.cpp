@@ -45,6 +45,7 @@ RpcBridge::RpcBridge(
     logDebug(DDSPIPE_RPCBRIDGE, "Creating RpcBridge " << *this << ".");
 
     logDebug(DDSPIPE_RPCBRIDGE, "RpcBridge " << *this << " created.");
+    std::cout << "RpcBridge for []" << topic.service_name() << "] created." << std::endl;
 }
 
 RpcBridge::~RpcBridge()
@@ -60,13 +61,16 @@ RpcBridge::~RpcBridge()
 void RpcBridge::init_nts_()
 {
     logInfo(DDSPIPE_RPCBRIDGE, "Creating endpoints in RpcBridge for service " << rpc_topic_ << ".");
+    std::cout << "Creating endpoints in RpcBridge for service " << rpc_topic_ << "." << std::endl;
 
     // TODO: remove and use every participant
-    std::set<ParticipantId> ids = participants_->get_rtps_participants_ids();
+    // std::set<ParticipantId> ids = participants_->get_rtps_participants_ids();
+    std::set<ParticipantId> ids = participants_->get_participants_ids();
 
     // Create a proxy client and server in each RTPS participant
     for (ParticipantId id: ids)
     {
+        printf("+++++ create proxy \n");
         create_proxy_client_nts_(id);
         create_proxy_server_nts_(id);
         if (current_servers_[id].size())
@@ -114,6 +118,7 @@ void RpcBridge::enable() noexcept
     if (!enabled_ && servers_available_())
     {
         logInfo(DDSPIPE_RPCBRIDGE, "Enabling RpcBridge for service " << rpc_topic_ << ".");
+        std::cout << "Enabling RpcBridge for service [" << rpc_topic_.service_name() << "]." << std::endl;
 
         if (!init_)
         {
@@ -267,6 +272,7 @@ void RpcBridge::transmit_(
 
     logDebug(DDSPIPE_RPCBRIDGE, "RpcBridge " << *this <<
             " transmitting for reader " << reader->guid() << " .");
+    std::cout << "RpcBridge [" << this->rpc_topic_.service_name() << "] transmitting for reader " << reader->guid() << " ." << std::endl;
 
     while (true)
     {
@@ -297,9 +303,6 @@ void RpcBridge::transmit_(
         std::unique_ptr<IRoutingData> data;
         utils::ReturnCode ret = reader->take(data);
 
-        RpcPayloadData& rpc_data = dynamic_cast<RpcPayloadData&>(*data);
-
-
         // Will never return \c RETCODE_NO_DATA, otherwise would have finished before
         if (!ret)
         {
@@ -308,14 +311,20 @@ void RpcBridge::transmit_(
                     "Error taking data at service Reader in topic " << reader->topic()
                                                                     << ". Error code " << ret
                                                                     << ". Skipping data and continue.");
+            std::cout << "Error taking data at service Reader in topic " << reader->topic()
+                    << ". Error code " << ret << ". Skipping data and continue." << std::endl;
             continue;
         }
+    
+        RpcPayloadData& rpc_data = dynamic_cast<RpcPayloadData&>(*data);
 
         if (RpcTopic::is_request_topic(reader->topic()))
         {
             logDebug(DDSPIPE_RPCBRIDGE,
                     "RpcBridge for service " << rpc_topic_ <<
                     " transmitting request from remote endpoint " << rpc_data.source_guid << ".");
+            std::cout << "RpcBridge for service [" << rpc_topic_.service_name() <<
+                "] transmitting request from remote endpoint " << rpc_data.source_guid << "." << std::endl;
 
             SampleIdentity reply_related_sample_identity =
                     rpc_data.write_params.get_reference().sample_identity();
@@ -327,6 +336,9 @@ void RpcBridge::transmit_(
                         "RpcBridge for service " << rpc_topic_ <<
                         " received ill-formed request from remote endpoint " << rpc_data.source_guid <<
                         ". Ignoring...");
+                std::cout << "RpcBridge for service [" << rpc_topic_.service_name() <<
+                        "] received ill-formed request from remote endpoint " << rpc_data.source_guid <<
+                        ". Ignoring..." << std::endl;
             }
             else
             {
@@ -347,6 +359,7 @@ void RpcBridge::transmit_(
                     rpc_data.write_params.set_level();
                     rpc_data.write_params.get_reference().related_sample_identity().writer_guid(
                         reply_readers_[service_registry.first]->guid());
+                    std::cout << "+++ Forword request with related: " << reply_readers_[service_registry.first]->guid() << std::endl;
 
 
                     ret = request_writers_[service_registry.first]->write(*data);
@@ -356,6 +369,9 @@ void RpcBridge::transmit_(
                         logWarning(DDSPIPE_RPCBRIDGE, "Error writting request in RpcBridge for service "
                                 << rpc_topic_ << ". Error code " << ret <<
                                 ". Skipping data for this writer and continue.");
+                        std::cout << "Error writting request in RpcBridge for service "
+                                << rpc_topic_ << ". Error code " << ret <<
+                                ". Skipping data for this writer and continue." << std::endl;
                         continue;
                     }
 
@@ -374,15 +390,23 @@ void RpcBridge::transmit_(
             logDebug(DDSPIPE_RPCBRIDGE,
                     "RpcBridge for service " << rpc_topic_ <<
                     " transmitting reply from remote endpoint " << rpc_data.source_guid << ".");
+            std::cout << "RpcBridge for service [" << rpc_topic_.service_name() <<
+                    "] transmitting reply from remote endpoint " << rpc_data.source_guid << "."
+                    << std::endl;
 
             // A Server could be answering a different client in this same DDS Pipe or a remote client
             // Thus, it must be filtered so only replies to this client are processed.
-            if (rpc_data.write_params.get_reference().sample_identity().writer_guid() != reader->guid())
+            //if (rpc_data.write_params.get_reference().sample_identity().writer_guid() != reader->guid())
+            if (rpc_data.write_params.get_reference().related_sample_identity().writer_guid() != reader->guid())
             {
                 logDebug(DDSPIPE_RPCBRIDGE,
                         "RpcBridge for service " << *this << " from reader " << reader->guid() <<
                         " received response meant for other client: " <<
                         rpc_data.write_params.get_reference().sample_identity().writer_guid());
+                std::cout << "RpcBridge for service " << *this << " from reader " << reader->guid() <<
+                        " received response meant for other client: " <<
+                        rpc_data.write_params.get_reference().sample_identity().writer_guid() <<
+                         " , related: " << rpc_data.write_params.get_reference().related_sample_identity().writer_guid() << std::endl;
             }
             else
             {
@@ -412,6 +436,8 @@ void RpcBridge::transmit_(
                     {
                         logWarning(DDSPIPE_RPCBRIDGE, "Error writting reply in RpcBridge for service "
                                 << rpc_topic_ << ". Error code " << ret << ".");
+                        std::cout << "Error writting reply in RpcBridge for service "
+                                << rpc_topic_ << ". Error code " << ret << "." << std::endl;
                     }
                     else
                     {

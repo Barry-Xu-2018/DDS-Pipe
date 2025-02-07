@@ -83,6 +83,7 @@ void CommonReader::init()
         nullptr,
         eprosima::fastdds::dds::StatusMask::all(),
         payload_pool_);
+    std::cout << "Create reader " << reader_->guid() << " for [" << topic_.topic_name() << "]" << std::endl;
     #endif // if FASTRTPS_VERSION_MAJOR <= 2 && FASTRTPS_VERSION_MINOR < 13
 
     if (!reader_)
@@ -130,6 +131,7 @@ utils::ReturnCode CommonReader::take_nts_(
     // NOTE: we assume this function is always called with nullptr data
 
     logInfo(DDSPIPE_DDS_READER, "Taking data in " << participant_id_ << " for topic " << topic_ << ".");
+    std::cout << "Taking data in " << participant_id_ << " for topic [" << topic_.topic_name() << "]." << std::endl;
 
     // Check if there is data available
     if (!(reader_->get_unread_count() > 0))
@@ -142,7 +144,7 @@ utils::ReturnCode CommonReader::take_nts_(
 
     do
     {
-        rtps_data.reset(new RtpsPayloadData());
+        rtps_data.reset(create_data_());
 
         auto ret = reader_->take_next_sample(rtps_data.get(), &info);
 
@@ -152,16 +154,19 @@ utils::ReturnCode CommonReader::take_nts_(
         if (!ret)
         {
             // There has been an error taking the data. Exit.
+            std::cout << "take_next_sample() return error !" << std::endl;
             return ret;
         }
     } while (!should_accept_sample_(info));
 
     logInfo(DDSPIPE_DDS_READER, "Data taken in " << participant_id_ << " for topic " << topic_ << ".");
+    std::cout << "Data taken in " << participant_id_ << " for topic [" << topic_.topic_name() << "]." << std::endl;
 
     // Verify that the rtps_data object is valid
     if (!rtps_data)
     {
         logError(DDSPIPE_DDS_READER, "The data taken by the reader is not valid.");
+        std::cout << "The data taken by the reader is not valid." << std::endl;
         return utils::ReturnCode::RETCODE_ERROR;
     }
 
@@ -287,6 +292,31 @@ void CommonReader::fill_received_data_(
     {
         data_to_fill.kind = ChangeKind::ALIVE;
     }
+}
+
+core::types::Guid CommonReader::guid() const noexcept
+{
+    return reader_->guid();
+}
+
+fastrtps::RecursiveTimedMutex& CommonReader::get_rtps_mutex() const noexcept
+{
+    return mp_mutex_;
+}
+
+uint64_t CommonReader::get_unread_count() const noexcept
+{
+    return reader_->get_unread_count();
+}
+
+core::types::DdsTopic CommonReader::topic() const noexcept
+{
+    return topic_;
+}
+
+RtpsPayloadData* CommonReader::create_data_() const noexcept
+{
+    return new RtpsPayloadData();
 }
 
 } /* namespace dds */

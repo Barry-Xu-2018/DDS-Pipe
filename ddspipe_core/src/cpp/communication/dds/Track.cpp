@@ -220,6 +220,8 @@ void Track::transmit_() noexcept
         std::unique_ptr<IRoutingData> data;
         utils::ReturnCode ret = reader_->take(data);
 
+        std::printf("--- %u\n", ret());
+
         if (ret == utils::ReturnCode::RETCODE_NO_DATA)
         {
             // There is no more data; reduce the status by 1
@@ -243,12 +245,16 @@ void Track::transmit_() noexcept
             // Error reading data
             logWarning(DDSPIPE_TRACK, "Error taking data in Track " << topic_->serialize() << ". Error code " << ret
                                                                     << ". Skipping data and continue.");
+            std::cout << "Error taking data in Track " << topic_->serialize() << ". Error code " << ret
+                << ". Skipping data and continue." << std::endl;
             continue;
         }
 
         logDebug(DDSPIPE_TRACK,
                 "Track " << reader_participant_id_ << " for topic " << topic_->serialize() <<
                 " transmitting data from remote endpoint.");
+        std::cout << "Track " << reader_participant_id_ << " for topic [" << topic_->topic_name() <<
+            "] transmitting data from remote endpoint." << std::endl;
 
         // Send data through writers
         for (auto& writer_it : writers_)
@@ -256,6 +262,7 @@ void Track::transmit_() noexcept
             logDebug(
                 DDSPIPE_TRACK,
                 "Forwarding data to writer " << writer_it.first << ".");
+            std::cout << "Forwarding data to writer " << writer_it.first << "." << std::endl;;
 
             ret = writer_it.second->write(*data);
 
