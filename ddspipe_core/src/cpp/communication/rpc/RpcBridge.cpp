@@ -396,8 +396,8 @@ void RpcBridge::transmit_(
 
             // A Server could be answering a different client in this same DDS Pipe or a remote client
             // Thus, it must be filtered so only replies to this client are processed.
-            //if (rpc_data.write_params.get_reference().sample_identity().writer_guid() != reader->guid())
-            if (rpc_data.write_params.get_reference().related_sample_identity().writer_guid() != reader->guid())
+            if (rpc_data.write_params.get_reference().sample_identity().writer_guid() != reader->guid())
+            //if (rpc_data.write_params.get_reference().related_sample_identity().writer_guid() != reader->guid())
             {
                 logDebug(DDSPIPE_RPCBRIDGE,
                         "RpcBridge for service " << *this << " from reader " << reader->guid() <<
