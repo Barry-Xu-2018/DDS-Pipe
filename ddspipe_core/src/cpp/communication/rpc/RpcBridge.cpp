@@ -378,6 +378,7 @@ void RpcBridge::transmit_(
                     eprosima::fastrtps::rtps::SequenceNumber_t sequence_number =
                             rpc_data.sent_sequence_number;
                     // Add entry to registry associated to the transmission of this request through this proxy client.
+                    std::cout << "add sent sequence: " << sequence_number << std::endl;
                     service_registry.second->add(
                         sequence_number,
                         {rpc_data.participant_receiver, reply_related_sample_identity});
@@ -420,6 +421,8 @@ void RpcBridge::transmit_(
                     registry_entry = service_registries_[reader->participant_id()]->get(
                         rpc_data.write_params.get_reference().sample_identity().sequence_number());
                 }
+
+                std::cout << "Get received sequence: " << rpc_data.write_params.get_reference().sample_identity().sequence_number() << std::endl;
 
                 // Not valid means:
                 //   Case 1: (SimpleParticipant) Request already replied by another server connected to the same participant as this one.
