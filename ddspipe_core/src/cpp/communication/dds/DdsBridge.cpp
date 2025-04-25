@@ -264,6 +264,9 @@ void DdsBridge::add_writers_to_tracks_nts_(
             const auto topic = create_topic_for_participant_nts_(participant);
             auto reader = participant->create_reader(*topic);
 
+            std::cout << "Creating track for " << id << " : reader " << reader->guid()
+            << " Topic: " << topic->m_topic_name << std::endl;
+
             tracks_[id] = std::make_unique<Track>(
                 topic_,
                 id,

@@ -88,6 +88,10 @@ void RpcBridge::create_proxy_server_nts_(
     reply_writers_[participant_id] = participant->create_writer(rpc_topic_.reply_topic());
     request_readers_[participant_id] = participant->create_reader(rpc_topic_.request_topic());
 
+    std::cout << "S: " << participant_id << " Reader: " << reply_readers_[participant_id]->guid() <<
+        " Writer: " << request_writers_[participant_id]->guid() <<
+        " Topic: " << rpc_topic_.reply_topic().topic_name() << std::endl;
+
     create_slot_(request_readers_[participant_id]);
 }
 
@@ -99,6 +103,10 @@ void RpcBridge::create_proxy_client_nts_(
     // Safe casting as we are only getting RTPS participants
     request_writers_[participant_id] = participant->create_writer(rpc_topic_.request_topic());
     reply_readers_[participant_id] = participant->create_reader(rpc_topic_.reply_topic());
+
+    std::cout << "C: " << participant_id << " Reader: " << reply_readers_[participant_id]->guid() <<
+        " Writer: " << request_writers_[participant_id]->guid() <<
+        " Topic: " << rpc_topic_.request_topic().topic_name() << std::endl;
 
     create_slot_(reply_readers_[participant_id]);
 
