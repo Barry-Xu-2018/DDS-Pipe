@@ -70,6 +70,7 @@ void RpcBridge::init_nts_()
         create_proxy_server_nts_(id);
         if (current_servers_[id].size())
         {
+            std::cout << "@@@ Enabling service registry for participant: " << id << std::endl;
             service_registries_[id]->enable();
         }
     }
@@ -88,9 +89,10 @@ void RpcBridge::create_proxy_server_nts_(
     reply_writers_[participant_id] = participant->create_writer(rpc_topic_.reply_topic());
     request_readers_[participant_id] = participant->create_reader(rpc_topic_.request_topic());
 
-    std::cout << "S: " << participant_id << " Reader: " << reply_readers_[participant_id]->guid() <<
-        " Writer: " << request_writers_[participant_id]->guid() <<
-        " Topic: " << rpc_topic_.reply_topic().topic_name() << std::endl;
+    std::cout << "S: " << participant_id
+        << " Request Reader (" << rpc_topic_.request_topic().topic_name() << "): " << request_readers_[participant_id]->guid()
+        << " Reply Writer (" << rpc_topic_.reply_topic().topic_name() << "): " << reply_writers_[participant_id]->guid()
+        << std::endl;
 
     create_slot_(request_readers_[participant_id]);
 }
@@ -104,9 +106,10 @@ void RpcBridge::create_proxy_client_nts_(
     request_writers_[participant_id] = participant->create_writer(rpc_topic_.request_topic());
     reply_readers_[participant_id] = participant->create_reader(rpc_topic_.reply_topic());
 
-    std::cout << "C: " << participant_id << " Reader: " << reply_readers_[participant_id]->guid() <<
-        " Writer: " << request_writers_[participant_id]->guid() <<
-        " Topic: " << rpc_topic_.request_topic().topic_name() << std::endl;
+    std::cout << "C: " << participant_id
+        << " Reply Reader (" << rpc_topic_.reply_topic().topic_name() << "): " << reply_readers_[participant_id]->guid()
+        << " Request Writer (" << rpc_topic_.request_topic().topic_name() << "): " << request_writers_[participant_id]->guid()
+        << std::endl;
 
     create_slot_(reply_readers_[participant_id]);
 
@@ -274,6 +277,8 @@ void RpcBridge::transmit_(
 
     logDebug(DDSPIPE_RPCBRIDGE, "RpcBridge " << *this <<
             " transmitting for reader " << reader->guid() << " .");
+    //printf("=================\n");
+    //std::cout << "Reader: " << reader->guid() << std::endl;
 
     while (true)
     {
@@ -304,6 +309,8 @@ void RpcBridge::transmit_(
         std::unique_ptr<IRoutingData> data;
         utils::ReturnCode ret = reader->take(data);
 
+        // 1. 如果是 Request 数据
+        // 包括 Domain 1 的 message 的信息，它的 sample_identity() 包括 writer guid 和 writer 的 sequence
         RpcPayloadData& rpc_data = dynamic_cast<RpcPayloadData&>(*data);
 
 
@@ -324,6 +331,9 @@ void RpcBridge::transmit_(
                     "RpcBridge for service " << rpc_topic_ <<
                     " transmitting request from remote endpoint " << rpc_data.source_guid << ".");
 
+            //std::cout << "+++ Receive from request topic" << std::endl;
+
+            // 需要保存返回到 domain 1 的哪个 writer 和 sequence
             SampleIdentity reply_related_sample_identity =
                     rpc_data.write_params.get_reference().sample_identity();
             reply_related_sample_identity.sequence_number(rpc_data.origin_sequence_number);
@@ -339,6 +349,10 @@ void RpcBridge::transmit_(
             {
                 for (auto& service_registry : service_registries_)
                 {
+                    //std::cout << rpc_data.participant_receiver
+                    //    << " -- " << service_registry.first
+                    //    << ":" << service_registry.second->enabled()
+                    //    << std::endl;
                     // Do not send request through same participant who received it (unless repeater), or if there are no servers to process it
                     if ((rpc_data.participant_receiver == service_registry.first &&
                             !participants_->get_participant(service_registry.first)->is_repeater()) ||
@@ -352,9 +366,13 @@ void RpcBridge::transmit_(
 
                     // Attach the information the server needs in order to reply to the appropiate proxy client.
                     rpc_data.write_params.set_level();
+                    // 在 Domain0 转发的 message 中，设置关联的 reply reader
                     rpc_data.write_params.get_reference().related_sample_identity().writer_guid(
                         reply_readers_[service_registry.first]->guid());
 
+                    //std::cout << "To " << service_registry.first
+                    //    << " Request Writer: " << request_writers_[service_registry.first]->guid()
+                    //    << std::endl;
 
                     ret = request_writers_[service_registry.first]->write(*data);
 
@@ -372,7 +390,12 @@ void RpcBridge::transmit_(
                     service_registry.second->add(
                         sequence_number,
                         {rpc_data.participant_receiver, reply_related_sample_identity});
-
+                    //std::cout << "Handle Request: "
+                    //    << "service_registry: " << service_registry.first
+                    //    << " sequence_number: " << sequence_number
+                    //    << " participant_receiver: " << rpc_data.participant_receiver
+                    //    << " reply_related_sample_identity: " << reply_related_sample_identity
+                    //    << std::endl;
                 }
             }
         }
@@ -382,14 +405,32 @@ void RpcBridge::transmit_(
                     "RpcBridge for service " << rpc_topic_ <<
                     " transmitting reply from remote endpoint " << rpc_data.source_guid << ".");
 
+            //std::cout <<
+            //        "RpcBridge for service " << rpc_topic_ <<
+            //        " transmitting reply from remote endpoint " << rpc_data.source_guid << "." << std::endl;
+
+
             // A Server could be answering a different client in this same DDS Pipe or a remote client
             // Thus, it must be filtered so only replies to this client are processed.
-            if (rpc_data.write_params.get_reference().sample_identity().writer_guid() != reader->guid())
+            
+            //std::cout << "+++ Reply :" << rpc_data.write_params->related_sample_identity().writer_guid()
+            //<< " sequence_number: " << rpc_data.write_params->related_sample_identity().sequence_number()
+            //<< std::endl;
+
+            //if (rpc_data.write_params.get_reference().sample_identity().writer_guid() != reader->guid())
+            if (!rpc_data.write_params.is_set() || 
+                rpc_data.write_params.get_reference().related_sample_identity().writer_guid()
+                    != reader->guid())
             {
+                // This reply is not meant for this client, ignore it
                 logDebug(DDSPIPE_RPCBRIDGE,
                         "RpcBridge for service " << *this << " from reader " << reader->guid() <<
                         " received response meant for other client: " <<
                         rpc_data.write_params.get_reference().sample_identity().writer_guid());
+                //std::cout <<
+                //        "RpcBridge for service " << *this << " from reader " << reader->guid() <<
+                //        " received response meant for other client: " <<
+                //        rpc_data.write_params.get_reference().sample_identity().writer_guid() << std::endl;
             }
             else
             {
@@ -400,9 +441,15 @@ void RpcBridge::transmit_(
                         service_registries_[reader->participant_id()]->get_mutex());
 
                     // Fetch information required for transmission; which proxy server should send it and with what parameters
+                    //registry_entry = service_registries_[reader->participant_id()]->get(
+                    //    rpc_data.write_params.get_reference().sample_identity().sequence_number());
                     registry_entry = service_registries_[reader->participant_id()]->get(
-                        rpc_data.write_params.get_reference().sample_identity().sequence_number());
+                        rpc_data.write_params.get_reference().related_sample_identity().sequence_number());
                 }
+
+                //std::cout << "Handle Reply: "
+                //    << "sequence_number: " << rpc_data.write_params.get_reference().sample_identity().sequence_number()
+                //    << std::endl;
 
                 // Not valid means:
                 //   Case 1: (SimpleParticipant) Request already replied by another server connected to the same participant as this one.
@@ -412,6 +459,10 @@ void RpcBridge::transmit_(
                 {
                     rpc_data.write_params.set_level();
                     rpc_data.write_params.get_reference().related_sample_identity(registry_entry.second);
+
+                    //std::cout << "To " << registry_entry.first
+                    //    << " Reply Writer: " << reply_writers_[registry_entry.first]->guid()
+                    //    << std::endl;
 
                     ret = reply_writers_[registry_entry.first]->write(*data);
 
