@@ -17,6 +17,8 @@
 #include <fastrtps/rtps/participant/RTPSParticipant.h>
 #include <fastrtps/rtps/common/CacheChange.h>
 
+#include <fastdds/dds/core/Entity.hpp>
+
 #include <cpp_utils/exception/InitializationException.hpp>
 #include <cpp_utils/Log.hpp>
 #include <cpp_utils/time/time_utils.hpp>

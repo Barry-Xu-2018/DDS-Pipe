@@ -89,6 +89,12 @@ public:
     virtual utils::ReturnCode write(
             core::IRoutingData& data) noexcept override;
 
+    DDSPIPE_PARTICIPANTS_DllAPI
+    virtual core::types::Guid guid() const
+    {
+        return core::types::Guid();
+    }
+
 protected:
 
     /////////////////////////

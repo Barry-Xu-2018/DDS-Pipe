@@ -42,6 +42,12 @@ public:
     DDSPIPE_PARTICIPANTS_DllAPI
     utils::ReturnCode write(
             core::IRoutingData& data) noexcept override;
+
+    DDSPIPE_PARTICIPANTS_DllAPI
+    core::types::Guid guid() const override
+    {
+        return core::types::Guid();
+    }
 };
 
 } /* namespace participants */

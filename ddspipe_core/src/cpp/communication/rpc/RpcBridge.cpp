@@ -88,6 +88,11 @@ void RpcBridge::create_proxy_server_nts_(
     reply_writers_[participant_id] = participant->create_writer(rpc_topic_.reply_topic());
     request_readers_[participant_id] = participant->create_reader(rpc_topic_.request_topic());
 
+    std::cout << "S: " << participant_id
+        << " Request Reader (" << rpc_topic_.request_topic().topic_name() << "): " << request_readers_[participant_id]->guid()
+        << ", Reply Writer (" << rpc_topic_.reply_topic().topic_name() << "): " << reply_writers_[participant_id]->guid()
+        << std::endl;
+
     create_slot_(request_readers_[participant_id]);
 }
 
@@ -99,6 +104,11 @@ void RpcBridge::create_proxy_client_nts_(
     // Safe casting as we are only getting RTPS participants
     request_writers_[participant_id] = participant->create_writer(rpc_topic_.request_topic());
     reply_readers_[participant_id] = participant->create_reader(rpc_topic_.reply_topic());
+
+    std::cout << "C: " << participant_id
+        << " Reply Reader (" << rpc_topic_.reply_topic().topic_name() << "): " << reply_readers_[participant_id]->guid()
+        << ", Request Writer (: " << rpc_topic_.request_topic().topic_name() << "): " << request_writers_[participant_id]->guid()
+        << std::endl;
 
     create_slot_(reply_readers_[participant_id]);
 
@@ -342,6 +352,11 @@ void RpcBridge::transmit_(
                         continue;
                     }
 
+                    if (rpc_data.participant_receiver.empty())
+                    {
+                        std::cout << "#################### participant_receiver is empty" << std::endl;
+                    }
+
                     // Perform write + add entry to registry atomically -> avoid reply processed before entry added to registry
                     std::lock_guard<std::recursive_mutex> lock(service_registry.second->get_mutex());
 
@@ -367,6 +382,18 @@ void RpcBridge::transmit_(
                     service_registry.second->add(
                         sequence_number,
                         {rpc_data.participant_receiver, reply_related_sample_identity});
+                    //std::cout << "=== Received request: " << reader->topic().m_topic_name
+                    //    << " forward sequence: " << sequence_number
+                    //    << " ### save " << reply_related_sample_identity.writer_guid()
+                    //    << " s: " << reply_related_sample_identity.sequence_number()
+                    //    << std::endl;
+                    std::cout << "=== FW Reply W: " << request_writers_[service_registry.first]->guid()
+                        << " : " << sequence_number
+                        << " reply R: " << reply_readers_[service_registry.first]->guid()
+                        << " --- Remote reply R: " << reply_related_sample_identity.writer_guid()
+                        << " : " << reply_related_sample_identity.sequence_number()
+                        << " service_registry " << &service_registries_
+                        << std::endl;
 
                 }
             }
@@ -383,7 +410,7 @@ void RpcBridge::transmit_(
                 rpc_data.write_params.get_reference().related_sample_identity().writer_guid()
                     != reader->guid())
             {
-                logDebug(DDSPIPE_RPCBRIDGE,
+                logWarning(DDSPIPE_RPCBRIDGE,
                         "RpcBridge for service " << *this << " from reader " << reader->guid() <<
                         " received response meant for other client: " <<
                         rpc_data.write_params.get_reference().sample_identity().writer_guid());
@@ -403,6 +430,10 @@ void RpcBridge::transmit_(
                         request_sequence_number);
                 }
 
+                std::cout << "=== Received Reply: " << reader->topic().m_topic_name
+                    << " received sequence: " << request_sequence_number
+                    << std::endl;
+
                 // Not valid means:
                 //   Case 1: (SimpleParticipant) Request already replied by another server connected to the same participant as this one.
                 //   Case 2: (WAN Participant repeater) Request already replied by another PROXY server connected to the same participant as this one.
@@ -421,9 +452,26 @@ void RpcBridge::transmit_(
                     }
                     else
                     {
+                        auto now = std::chrono::system_clock::now();
+                        std::cout << "--- " <<
+                            std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()).count()
+                            << " Forward reply for sequence: "
+                            << request_sequence_number
+                            << " @@@ for reply reader: " << registry_entry.second.writer_guid()
+                            << " s: " << registry_entry.second.sequence_number()
+                            << std::endl;
+                        std::cout << ">>> "
+                            << reader->participant_id()
+                            << " Remove service_registry "
+                            << &service_registries_
+                            << " Index:"
+                            << rpc_data.write_params.get_reference().sample_identity().sequence_number()
+                            << std::endl;
                         service_registries_[reader->participant_id()]->erase(
                             request_sequence_number);
                     }
+                } else {
+                    std::cout << "!!!!!! registry_entry.first is emtpy" << std::endl;
                 }
             }
         }

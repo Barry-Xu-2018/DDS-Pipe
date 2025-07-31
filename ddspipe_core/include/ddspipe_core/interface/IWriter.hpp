@@ -17,6 +17,7 @@
 #include <cpp_utils/ReturnCode.hpp>
 
 #include <ddspipe_core/interface/IRoutingData.hpp>
+#include <ddspipe_core/types/dds/Guid.hpp>
 
 namespace eprosima {
 namespace ddspipe {
@@ -82,6 +83,9 @@ public:
     DDSPIPE_CORE_DllAPI
     virtual utils::ReturnCode write(
             IRoutingData& data) noexcept = 0;
+
+    DDSPIPE_CORE_DllAPI
+    virtual core::types::Guid guid() const = 0;
 };
 
 } /* namespace core */
