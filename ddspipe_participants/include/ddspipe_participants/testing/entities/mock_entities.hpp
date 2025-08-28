@@ -142,6 +142,12 @@ public:
     DDSPIPE_PARTICIPANTS_DllAPI
     std::size_t n_to_send_data();
 
+    DDSPIPE_PARTICIPANTS_DllAPI
+    core::types::Guid guid() const override
+    {
+        return core::types::Guid();
+    }
+
 protected:
 
     utils::event::CounterWaitHandler waiter_{0, 0, true};

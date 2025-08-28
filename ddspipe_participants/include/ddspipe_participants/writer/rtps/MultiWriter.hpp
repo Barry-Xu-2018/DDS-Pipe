@@ -69,6 +69,12 @@ public:
     DDSPIPE_PARTICIPANTS_DllAPI
     virtual ~MultiWriter();
 
+    DDSPIPE_PARTICIPANTS_DllAPI
+    core::types::Guid guid() const override
+    {
+        return core::types::Guid();
+    }
+
 protected:
 
     //! Override specific enable to call enable in internal writers.

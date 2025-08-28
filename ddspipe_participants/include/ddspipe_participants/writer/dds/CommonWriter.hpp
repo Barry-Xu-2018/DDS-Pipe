@@ -84,6 +84,11 @@ public:
     DDSPIPE_PARTICIPANTS_DllAPI
     static std::atomic<utils::Duration_ms> wait_all_acked_timeout;
 
+    DDSPIPE_PARTICIPANTS_DllAPI
+    core::types::Guid guid() const override {
+        return writer_->guid();
+    }
+
 protected:
 
     /**

@@ -45,6 +45,12 @@ public:
             std::shared_ptr<core::PayloadPool> payload_pool,
             std::shared_ptr<ISchemaHandler> schema_handler);
 
+    DDSPIPE_PARTICIPANTS_DllAPI
+    core::types::Guid guid() const override
+    {
+        return core::types::Guid();
+    }
+
 protected:
 
     /**
