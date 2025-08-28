@@ -19,6 +19,7 @@
 #include <fastdds/dds/domain/DomainParticipantFactory.hpp>
 
 #include <ddspipe_core/types/dynamic_types/types.hpp>
+#include <ddspipe_core/types/data/RpcPayloadData.hpp>
 #include <ddspipe_core/types/data/RtpsPayloadData.hpp>
 
 #include <ddspipe_participants/participant/rtps/SimpleParticipant.hpp>
@@ -133,8 +134,7 @@ std::shared_ptr<core::IWriter> CommonParticipant::create_writer(
     // Get the DDS Topic associated (create it if it does not exist)
     fastdds::dds::Topic* fastdds_topic = topic_related_(dds_topic);
 
-    // It is not a RTPS topic
-    if (dds_topic.internal_type_discriminator() != core::types::INTERNAL_TOPIC_TYPE_RTPS)
+    if (dds_topic.internal_type_discriminator() == core::types::INTERNAL_TOPIC_TYPE_RPC)
     {
         logDebug(DDSPIPE_DDS_PARTICIPANT,
             "Creating DDS RPC Writer for topic " << fastdds_topic->get_name()
@@ -149,29 +149,35 @@ std::shared_ptr<core::IWriter> CommonParticipant::create_writer(
 
         return writer;
     }
-
-    // It is a RTPS topic
-    if (dds_topic.topic_qos.has_partitions() || dds_topic.topic_qos.has_ownership())
+    else if (dds_topic.internal_type_discriminator() == core::types::INTERNAL_TOPIC_TYPE_RTPS)
     {
-        // Notice that MultiWriter does not require an init call
-        return std::make_shared<MultiWriter>(
-            this->id(),
-            dds_topic,
-            this->payload_pool_,
-            dds_participant_,
-            fastdds_topic);
+        if (dds_topic.topic_qos.has_partitions() || dds_topic.topic_qos.has_ownership())
+        {
+            // Notice that MultiWriter does not require an init call
+            return std::make_shared<MultiWriter>(
+                this->id(),
+                dds_topic,
+                this->payload_pool_,
+                dds_participant_,
+                fastdds_topic);
+        }
+        else
+        {
+            auto writer = std::make_shared<SimpleWriter>(
+                this->id(),
+                dds_topic,
+                this->payload_pool_,
+                dds_participant_,
+                fastdds_topic);
+            writer->init();
+
+            return writer;
+        }
     }
     else
     {
-        auto writer = std::make_shared<SimpleWriter>(
-            this->id(),
-            dds_topic,
-            this->payload_pool_,
-            dds_participant_,
-            fastdds_topic);
-        writer->init();
-
-        return writer;
+        logDebug(DDSPIPE_DDS_PARTICIPANT, "Incorrect dds Topic in Writer creation.");
+        return std::make_shared<BlankWriter>();
     }
 }
 
@@ -192,8 +198,7 @@ std::shared_ptr<core::IReader> CommonParticipant::create_reader(
     // Get the DDS Topic associated (create it if it does not exist)
     fastdds::dds::Topic* fastdds_topic = topic_related_(dds_topic);
 
-    // It is not a RTPS topic
-    if (dds_topic.internal_type_discriminator() != core::types::INTERNAL_TOPIC_TYPE_RTPS)
+    if (dds_topic.internal_type_discriminator() == core::types::INTERNAL_TOPIC_TYPE_RPC)
     {
         logDebug(DDSPIPE_DDS_PARTICIPANT,
             "Creating DDS RPC Reader for topic " << fastdds_topic->get_name()
@@ -208,33 +213,39 @@ std::shared_ptr<core::IReader> CommonParticipant::create_reader(
 
         return reader;
     }
-
-    // It is a RTPS topic
-    if (dds_topic.topic_qos.has_partitions() || dds_topic.topic_qos.has_ownership())
+    else if (dds_topic.internal_type_discriminator() == core::types::INTERNAL_TOPIC_TYPE_RTPS)
     {
-        // Notice that MultiReader does not require an init call
-        auto reader = std::make_shared<SpecificQoSReader>(
-            this->id(),
-            dds_topic,
-            this->payload_pool_,
-            dds_participant_,
-            fastdds_topic,
-            discovery_database_);
-        reader->init();
+        if (dds_topic.topic_qos.has_partitions() || dds_topic.topic_qos.has_ownership())
+        {
+            // Notice that MultiReader does not require an init call
+            auto reader = std::make_shared<SpecificQoSReader>(
+                this->id(),
+                dds_topic,
+                this->payload_pool_,
+                dds_participant_,
+                fastdds_topic,
+                discovery_database_);
+            reader->init();
 
-        return reader;
+            return reader;
+        }
+        else
+        {
+            auto reader = std::make_shared<SimpleReader>(
+                this->id(),
+                dds_topic,
+                this->payload_pool_,
+                dds_participant_,
+                fastdds_topic);
+            reader->init();
+
+            return reader;
+        }
     }
     else
     {
-        auto reader = std::make_shared<SimpleReader>(
-            this->id(),
-            dds_topic,
-            this->payload_pool_,
-            dds_participant_,
-            fastdds_topic);
-        reader->init();
-
-        return reader;
+        logDebug(DDSPIPE_DDS_PARTICIPANT, "Incorrect dds Topic in Reader creation.");
+        return std::make_shared<BlankReader>();
     }
 }
 
