@@ -56,7 +56,7 @@ public:
 
     //! Override Parent method to fill fields only required for RPC.
     DDSPIPE_PARTICIPANTS_DllAPI
-    virtual utils::ReturnCode get_send_params_(
+    virtual utils::ReturnCode fill_to_send_data_(
             eprosima::fastdds::rtps::WriteParams& to_send_params,
             const core::types::RtpsPayloadData& data) const noexcept;
 

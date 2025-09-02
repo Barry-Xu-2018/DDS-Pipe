@@ -44,7 +44,7 @@ DdsSimpleWriter::DdsSimpleWriter(
     //std::cout << "Creating DDS RPC Writer for topic " << topic_ << std::endl;
 }
 
-utils::ReturnCode DdsSimpleWriter::get_send_params_(
+utils::ReturnCode DdsSimpleWriter::fill_to_send_data_(
     eprosima::fastdds::rtps::WriteParams& to_send_params,
     const core::types::RtpsPayloadData& data) const noexcept
 {

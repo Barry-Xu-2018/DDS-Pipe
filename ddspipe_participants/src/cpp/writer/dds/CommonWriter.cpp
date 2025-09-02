@@ -230,13 +230,6 @@ utils::ReturnCode CommonWriter::fill_to_send_data_(
     return utils::ReturnCode::RETCODE_OK;
 }
 
-utils::ReturnCode CommonWriter::get_send_params_(
-            eprosima::fastdds::rtps::WriteParams& to_send_params,
-            const core::types::RtpsPayloadData& data) const noexcept
-{
-    return utils::ReturnCode::RETCODE_NO_DATA;
-}
-
 void CommonWriter::fill_sent_data_(
     const eprosima::fastdds::rtps::WriteParams& sent_params,
     core::types::RtpsPayloadData& data_to_fill) const noexcept
