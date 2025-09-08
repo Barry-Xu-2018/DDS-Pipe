@@ -131,7 +131,6 @@ std::shared_ptr<core::IWriter> CommonParticipant::create_writer(
     // Get the DDS Topic associated (create it if it does not exist)
     fastdds::dds::Topic* fastdds_topic = topic_related_(dds_topic);
 
-    // It is not a RTPS topic
     if (dds_topic.internal_type_discriminator() == core::types::INTERNAL_TOPIC_TYPE_RPC)
     {
         logDebug(DDSPIPE_DDS_PARTICIPANT,
@@ -148,7 +147,6 @@ std::shared_ptr<core::IWriter> CommonParticipant::create_writer(
     }
     else if (dds_topic.internal_type_discriminator() == core::types::INTERNAL_TOPIC_TYPE_RTPS)
     {
-        // It is a RTPS topic
         if (dds_topic.topic_qos.has_partitions() || dds_topic.topic_qos.has_ownership())
         {
             // Notice that MultiWriter does not require an init call
@@ -198,7 +196,6 @@ std::shared_ptr<core::IReader> CommonParticipant::create_reader(
     // Get the DDS Topic associated (create it if it does not exist)
     fastdds::dds::Topic* fastdds_topic = topic_related_(dds_topic);
 
-    // It is not a RTPS topic
     if (dds_topic.internal_type_discriminator() == core::types::INTERNAL_TOPIC_TYPE_RPC)
     {
         logDebug(DDSPIPE_DDS_PARTICIPANT,
@@ -215,7 +212,6 @@ std::shared_ptr<core::IReader> CommonParticipant::create_reader(
     }
     else if (dds_topic.internal_type_discriminator() == core::types::INTERNAL_TOPIC_TYPE_RTPS)
     {
-        // It is a RTPS topic
         if (dds_topic.topic_qos.has_partitions() || dds_topic.topic_qos.has_ownership())
         {
             // Notice that MultiReader does not require an init call
